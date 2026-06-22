@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>단어장</title>
+  <link rel="stylesheet" href="sidepanel.css">
+</head>
+<body>
+  <header class="header">
+    <div class="header-row">
+      <div class="header-title">
+        <span class="logo">📖</span>
+        <h1>단어장</h1>
+        <span class="word-count" id="wordCount">0개</span>
+      </div>
+      <button id="clearAllBtn" class="clear-btn" style="display:none;">전체 삭제</button>
+    </div>
+    <div class="search-bar">
+      <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+      </svg>
+      <input type="text" id="searchInput" class="search-input" placeholder="단어 또는 번역 검색...">
+    </div>
+  </header>
+
+  <main>
+    <div id="wordList" class="word-list"></div>
+    <div id="emptyState" class="empty-state">
+      <div class="empty-icon">📚</div>
+      <p class="empty-title">단어장이 비어있어요</p>
+      <p class="empty-desc">
+        웹 페이지에서 단어를 선택하고<br>
+        우클릭 → <strong>"단어장에 추가"</strong>를 눌러보세요
+      </p>
+    </div>
+  </main>
+
+  <div id="toast" class="toast"></div>
+
+  <script src="sidepanel.js"></script>
+</body>
+</html>
