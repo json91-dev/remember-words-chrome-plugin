@@ -20,6 +20,20 @@ function getHostname(url) {
   try { return new URL(url).hostname; } catch { return ''; }
 }
 
+function speakWord(text, btn) {
+  if (!('speechSynthesis' in window)) return;
+  window.speechSynthesis.cancel();          // 연속 클릭 시 이전 음성 중단
+  document.querySelectorAll('.tts-btn.playing').forEach(b => b.classList.remove('playing'));
+  const u = new SpeechSynthesisUtterance(text);
+  u.lang = 'en-US';
+  u.rate = 0.9;
+  if (btn) {
+    btn.classList.add('playing');
+    u.onend = u.onerror = () => btn.classList.remove('playing');
+  }
+  window.speechSynthesis.speak(u);
+}
+
 // ── Rendering ─────────────────────────────────────────────────────────────────
 
 function createCardHTML(w) {
@@ -34,7 +48,7 @@ function createCardHTML(w) {
     <div class="word-card">
       <button class="delete-btn" data-id="${w.id}" title="삭제">✕</button>
       <button class="edit-btn" data-id="${w.id}" title="수정">✎</button>
-      <div class="word-text">${escapeHTML(w.word)}</div>
+      <div class="word-text">${escapeHTML(w.word)}<button class="tts-btn" data-id="${w.id}" title="발음 듣기">🔊</button></div>
       <div class="translation-text${isError ? ' error' : ''}">${escapeHTML(w.translation)}</div>
       <div class="card-meta">
         <span>${formatDate(w.addedAt)}</span>
@@ -71,6 +85,12 @@ function renderWords(words) {
     btn.addEventListener('click', () => {
       const word = allWords.find(w => w.id === Number(btn.dataset.id));
       if (word) startEdit(btn.closest('.word-card'), word);
+    });
+  });
+  list.querySelectorAll('.tts-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const word = allWords.find(w => w.id === Number(btn.dataset.id));
+      if (word) speakWord(word.word, btn);
     });
   });
 }
@@ -162,6 +182,28 @@ function showToast(msg, isDuplicate = false) {
   toastTimer = setTimeout(() => { toast.className = 'toast'; }, 2600);
 }
 
+// ── Confirm bar (bottom slide-up) ─────────────────────────────────────────────
+
+function showConfirmBar(message, onConfirm) {
+  const bar = document.getElementById('confirmBar');
+  const okBtn = document.getElementById('confirmBarOk');
+  const cancelBtn = document.getElementById('confirmBarCancel');
+  document.getElementById('confirmBarMsg').textContent = message;
+  bar.classList.add('show');
+
+  const hide = () => {
+    bar.classList.remove('show');
+    okBtn.onclick = null;
+    cancelBtn.onclick = null;
+    document.removeEventListener('keydown', onKey);
+  };
+  const onKey = e => { if (e.key === 'Escape') hide(); };
+
+  okBtn.onclick = () => { hide(); onConfirm(); };
+  cancelBtn.onclick = hide;
+  document.addEventListener('keydown', onKey);
+}
+
 // ── Init ──────────────────────────────────────────────────────────────────────
 
 async function loadWords() {
@@ -175,13 +217,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
   document.getElementById('searchInput').addEventListener('input', applySearch);
 
-  document.getElementById('clearAllBtn').addEventListener('click', async () => {
+  document.getElementById('clearAllBtn').addEventListener('click', () => {
     if (!allWords.length) return;
-    if (confirm(`저장된 단어 ${allWords.length}개를 모두 삭제할까요?`)) {
+    showConfirmBar(`저장된 단어 ${allWords.length}개를 모두 삭제할까요?`, async () => {
       allWords = [];
       await chrome.storage.local.set({ words: [] });
       renderWords([]);
-    }
+      showToast('전체 삭제 완료 🗑️');
+    });
   });
 });
 

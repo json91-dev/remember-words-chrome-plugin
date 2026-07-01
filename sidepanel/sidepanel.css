@@ -257,6 +257,35 @@ main {
   color: #667EEA;
 }
 
+.tts-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  margin-left: 6px;
+  padding: 0;
+  border: none;
+  border-radius: 5px;
+  background: transparent;
+  cursor: pointer;
+  font-size: 12px;
+  line-height: 1;
+  vertical-align: middle;
+  opacity: 0.55;
+  transition: all 0.15s;
+}
+
+.tts-btn:hover {
+  background: #DBEAFE;
+  opacity: 1;
+}
+
+.tts-btn.playing {
+  background: #DBEAFE;
+  opacity: 1;
+}
+
 /* ── Edit mode ───────────────────────── */
 .word-card.editing {
   border-color: #667EEA;
@@ -400,4 +429,68 @@ main {
 
 .toast.duplicate {
   background: #7C3AED;
+}
+
+/* ── Confirm bar (bottom slide-up) ───── */
+.confirm-bar {
+  position: fixed;
+  left: 12px;
+  right: 12px;
+  bottom: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  background: #1E293B;
+  padding: 12px 14px;
+  border-radius: 12px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.28);
+  transform: translateY(140%);
+  transition: transform 0.24s cubic-bezier(0.22, 1, 0.36, 1);
+  z-index: 150;
+}
+
+.confirm-bar.show {
+  transform: translateY(0);
+}
+
+.confirm-bar-msg {
+  font-size: 13px;
+  font-weight: 500;
+  color: #F1F5F9;
+  line-height: 1.4;
+}
+
+.confirm-bar-actions {
+  display: flex;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.cbar-btn {
+  padding: 7px 14px;
+  border: none;
+  border-radius: 7px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.cbar-btn.cancel {
+  background: rgba(255, 255, 255, 0.12);
+  color: #E2E8F0;
+}
+
+.cbar-btn.cancel:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.cbar-btn.danger {
+  background: #EF4444;
+  color: #fff;
+}
+
+.cbar-btn.danger:hover {
+  background: #DC2626;
 }
