@@ -19,10 +19,8 @@ async function fetchTranslation(word) {
   }
 }
 
-chrome.contextMenus.onClicked.addListener(async (info, tab) => {
-  if (info.menuItemId !== 'addToWordbook') return;
-
-  const word = (info.selectionText || '').trim();
+async function addWord(rawWord, sourceUrl = '') {
+  const word = (rawWord || '').trim();
   if (!word) return;
 
   const translation = await fetchTranslation(word);
@@ -37,7 +35,7 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
           id: Date.now(),
           word,
           translation,
-          sourceUrl: tab?.url || '',
+          sourceUrl,
           addedAt: new Date().toISOString(),
         },
         ...words,
@@ -47,9 +45,22 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
     words: updatedWords,
     notification: { word, isDuplicate, timestamp: Date.now() },
   });
+}
+
+chrome.contextMenus.onClicked.addListener(async (info, tab) => {
+  if (info.menuItemId !== 'addToWordbook') return;
+
+  await addWord(info.selectionText, tab?.url || '');
 
   if (tab?.windowId) {
     await chrome.sidePanel.open({ windowId: tab.windowId });
+  }
+});
+
+chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
+  if (msg?.type === 'addWord') {
+    addWord(msg.word, '').then(() => sendResponse({ ok: true }));
+    return true; // async 응답 유지
   }
 });
 

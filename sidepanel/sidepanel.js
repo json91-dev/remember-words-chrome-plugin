@@ -48,7 +48,7 @@ function createCardHTML(w) {
     <div class="word-card">
       <button class="delete-btn" data-id="${w.id}" title="삭제">✕</button>
       <button class="edit-btn" data-id="${w.id}" title="수정">✎</button>
-      <div class="word-text">${escapeHTML(w.word)}<button class="tts-btn" data-id="${w.id}" title="발음 듣기">🔊</button></div>
+      <div class="word-text"><span class="word-copy" data-id="${w.id}" title="클릭하여 복사">${escapeHTML(w.word)}</span><button class="tts-btn" data-id="${w.id}" title="발음 듣기">🔊</button></div>
       <div class="translation-text${isError ? ' error' : ''}">${escapeHTML(w.translation)}</div>
       <div class="card-meta">
         <span>${formatDate(w.addedAt)}</span>
@@ -91,6 +91,18 @@ function renderWords(words) {
     btn.addEventListener('click', () => {
       const word = allWords.find(w => w.id === Number(btn.dataset.id));
       if (word) speakWord(word.word, btn);
+    });
+  });
+  list.querySelectorAll('.word-copy').forEach(span => {
+    span.addEventListener('click', async () => {
+      const word = allWords.find(w => w.id === Number(span.dataset.id));
+      if (!word) return;
+      try {
+        await navigator.clipboard.writeText(word.word);
+        showToast(`"${word.word}" 복사됨 📋`);
+      } catch {
+        showToast('복사 실패');
+      }
     });
   });
 }
@@ -216,6 +228,29 @@ document.addEventListener('DOMContentLoaded', () => {
   loadWords();
 
   document.getElementById('searchInput').addEventListener('input', applySearch);
+
+  const newWordInput = document.getElementById('newWordInput');
+  const addWordBtn = document.getElementById('addWordBtn');
+
+  async function submitNewWord() {
+    const word = newWordInput.value.trim();
+    if (!word) return;
+    newWordInput.disabled = true;
+    addWordBtn.disabled = true;
+    try {
+      await chrome.runtime.sendMessage({ type: 'addWord', word });
+      newWordInput.value = '';
+    } catch {
+      showToast('추가 실패');
+    } finally {
+      newWordInput.disabled = false;
+      addWordBtn.disabled = false;
+      newWordInput.focus();
+    }
+  }
+
+  addWordBtn.addEventListener('click', submitNewWord);
+  newWordInput.addEventListener('keydown', e => { if (e.key === 'Enter') submitNewWord(); });
 
   document.getElementById('clearAllBtn').addEventListener('click', () => {
     if (!allWords.length) return;
