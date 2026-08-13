@@ -1,10 +1,11 @@
 {
   "manifest_version": 3,
+  "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAsPuBE51YGl9ZlHSKvMqQwJicMJmesdPjaMbmX+obYqEtX+vPeo8tN0ROi6i8Dor74ppP583/AnVJW36xsiPIojTMPoMvBioVqAmhek9RLxHkebfbg8ILoTyI+C5K/Ky8owLCBAcLNo0kZL51KknXjawkcK6lFQc5Wc+TPNkU3rWTE5ma44epLX9j3Yjai3aKQd8Ui89qj8EbY0cMXpYKQ152UT/bA3mVp89qXhJn0ybn9PfgpwdPezQsoDoF1R9caDSR54rJTYy+x8VKqvnqQgK1Vafd1RbzZysCxqlrKIOaabpqMLys+hTmpY5jNSc60zUt4gA6yu9sJAwMKB42iwIDAQAB",
   "name": "단어장",
   "description": "웹페이지에서 영단어를 선택해 단어장에 저장하고 한국어 번역을 확인하세요.",
   "version": "1.0.0",
   "permissions": ["contextMenus", "storage", "sidePanel", "activeTab"],
-  "host_permissions": ["*://api.mymemory.translated.net/*"],
+  "host_permissions": ["*://api.mymemory.translated.net/*", "*://api.openai.com/*"],
   "side_panel": {
     "default_path": "sidepanel/sidepanel.html"
   },

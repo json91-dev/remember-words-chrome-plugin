@@ -7,39 +7,93 @@
   <link rel="stylesheet" href="sidepanel.css">
 </head>
 <body>
-  <header class="header">
-    <div class="header-row">
-      <div class="header-title">
-        <span class="logo">📖</span>
-        <h1>단어장</h1>
-        <span class="word-count" id="wordCount">0개</span>
+
+  <div class="view-switcher">
+    <button class="view-btn active" id="viewWordbookBtn">📖 단어장</button>
+    <button class="view-btn" id="viewGlossaryBtn">📚 용어집</button>
+  </div>
+
+  <!-- 단어장 뷰 -->
+  <div id="wordbookView">
+    <header class="header">
+      <div class="header-row">
+        <div class="header-title">
+          <span class="logo">📖</span>
+          <h1>단어장</h1>
+          <span class="word-count" id="wordCount">0개</span>
+        </div>
+        <button id="clearAllBtn" class="clear-btn" style="display:none;">전체 삭제</button>
       </div>
-      <button id="clearAllBtn" class="clear-btn" style="display:none;">전체 삭제</button>
-    </div>
-    <div class="search-bar">
-      <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-        <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
-      </svg>
-      <input type="text" id="searchInput" class="search-input" placeholder="단어 또는 번역 검색...">
-    </div>
-    <div class="add-bar">
-      <input type="text" id="newWordInput" class="add-input" placeholder="영어 단어 추가 후 Enter" autocomplete="off">
-      <button id="addWordBtn" class="add-btn" title="추가">＋</button>
-    </div>
-  </header>
+      <div class="category-tabs-wrapper">
+        <div class="category-tabs" id="categoryTabs"></div>
+      </div>
+      <div class="add-bar">
+        <input type="text" id="newWordInput" class="add-input" placeholder="영어 단어 추가 후 Enter" autocomplete="off">
+        <button id="addWordBtn" class="add-btn" title="추가">＋</button>
+      </div>
+      <div class="category-toggle-bar" id="categoryToggleBar" style="display:none;">
+        <label class="cat-toggle-label">
+          <input type="checkbox" id="addToCategoryCheck" checked>
+          <span id="addToCategoryLabelText"></span>
+        </label>
+      </div>
+    </header>
+    <main>
+      <div id="wordList" class="word-list"></div>
+      <div id="emptyState" class="empty-state">
+        <div class="empty-icon">📚</div>
+        <p class="empty-title">단어장이 비어있어요</p>
+        <p class="empty-desc">
+          웹 페이지에서 단어를 선택하고<br>
+          우클릭 → <strong>"단어장에 추가"</strong>를 눌러보세요
+        </p>
+      </div>
+    </main>
+  </div>
 
-  <main>
-    <div id="wordList" class="word-list"></div>
-    <div id="emptyState" class="empty-state">
-      <div class="empty-icon">📚</div>
-      <p class="empty-title">단어장이 비어있어요</p>
-      <p class="empty-desc">
-        웹 페이지에서 단어를 선택하고<br>
-        우클릭 → <strong>"단어장에 추가"</strong>를 눌러보세요
-      </p>
-    </div>
-  </main>
+  <!-- 용어집 뷰 -->
+  <div id="glossaryView" style="display:none;">
+    <header class="header glossary-header">
+      <div class="header-row">
+        <div class="header-title">
+          <span class="logo">📋</span>
+          <h1>용어집</h1>
+          <span class="word-count" id="glossaryCount">0개</span>
+        </div>
+        <div style="display:flex;gap:6px;align-items:center;">
+          <button id="apiKeyBtn" class="clear-btn" title="AI API 키 설정">⚙ API</button>
+          <button id="clearGlossaryBtn" class="clear-btn" style="display:none;">전체 삭제</button>
+        </div>
+      </div>
+      <div class="category-tabs-wrapper">
+        <div class="category-tabs" id="gCategoryTabs"></div>
+      </div>
+      <div class="add-bar">
+        <input type="text" id="newTermInput" class="add-input" placeholder="용어 입력 후 Enter" autocomplete="off">
+        <button id="addTermBtn" class="add-btn" title="추가">＋</button>
+      </div>
+      <div class="category-toggle-bar" id="gCategoryToggleBar" style="display:none;">
+        <label class="cat-toggle-label">
+          <input type="checkbox" id="addToGCategoryCheck" checked>
+          <span id="addToGCategoryLabelText"></span>
+        </label>
+      </div>
+    </header>
+    <main>
+      <div id="glossaryList" class="word-list"></div>
+      <div id="glossaryEmptyState" class="empty-state">
+        <div class="empty-icon">📋</div>
+        <p class="empty-title">용어집이 비어있어요</p>
+        <p class="empty-desc">
+          용어를 입력하고<br>
+          <strong>✨ AI 버튼</strong>으로 설명을 자동완성해보세요
+        </p>
+      </div>
+    </main>
+  </div>
 
+  <!-- 공유 요소 -->
+  <div id="categoryDropdown" class="category-dropdown"></div>
   <div id="toast" class="toast"></div>
 
   <div id="confirmBar" class="confirm-bar">
@@ -47,6 +101,22 @@
     <div class="confirm-bar-actions">
       <button id="confirmBarCancel" class="cbar-btn cancel">취소</button>
       <button id="confirmBarOk" class="cbar-btn danger">삭제</button>
+    </div>
+  </div>
+
+  <div id="catInputBar" class="cat-input-bar">
+    <input type="text" id="catNameInput" class="cat-name-input" placeholder="카테고리 이름" maxlength="20">
+    <div class="cat-input-actions">
+      <button id="catInputCancel" class="cbar-btn cancel">취소</button>
+      <button id="catInputConfirm" class="cbar-btn confirm">추가</button>
+    </div>
+  </div>
+
+  <div id="apiKeyBar" class="cat-input-bar">
+    <input type="password" id="apiKeyInput" class="cat-name-input" placeholder="OpenAI API 키 (sk-...)" maxlength="200">
+    <div class="cat-input-actions">
+      <button id="apiKeyCancel" class="cbar-btn cancel">취소</button>
+      <button id="apiKeyConfirm" class="cbar-btn confirm">저장</button>
     </div>
   </div>
 

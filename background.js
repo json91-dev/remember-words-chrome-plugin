@@ -4,6 +4,7 @@ chrome.runtime.onInstalled.addListener(() => {
     title: '단어장에 추가',
     contexts: ['selection'],
   });
+  chrome.sidePanel.setPanelBehavior({ openPanelOnActionClick: true });
 });
 
 async function fetchTranslation(word) {
@@ -19,7 +20,7 @@ async function fetchTranslation(word) {
   }
 }
 
-async function addWord(rawWord, sourceUrl = '') {
+async function addWord(rawWord, sourceUrl = '', category = null) {
   const word = (rawWord || '').trim();
   if (!word) return;
 
@@ -37,6 +38,7 @@ async function addWord(rawWord, sourceUrl = '') {
           translation,
           sourceUrl,
           addedAt: new Date().toISOString(),
+          category,
         },
         ...words,
       ];
@@ -59,8 +61,8 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
 
 chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
   if (msg?.type === 'addWord') {
-    addWord(msg.word, '').then(() => sendResponse({ ok: true }));
-    return true; // async 응답 유지
+    addWord(msg.word, '', msg.category || null).then(() => sendResponse({ ok: true }));
+    return true;
   }
 });
 
