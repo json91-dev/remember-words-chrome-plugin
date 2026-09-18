@@ -60,6 +60,9 @@ function createCardHTML(w) {
       <button class="edit-btn" data-id="${w.id}" title="수정">✎</button>
       <div class="word-text"><span class="word-copy" data-id="${w.id}" title="클릭하여 복사">${escapeHTML(w.word)}</span><button class="tts-btn" data-id="${w.id}" title="발음 듣기">🔊</button></div>
       <div class="translation-text${isError ? ' error' : ''}">${escapeHTML(w.translation)}</div>
+      ${w.example
+        ? `<div class="example-wrapper"><div class="example-text" data-id="${w.id}" title="클릭하여 예문 수정">${escapeHTML(w.example)}</div><button class="ai-example-btn" data-id="${w.id}" title="AI로 예문 재생성">✨</button></div>`
+        : `<div class="example-actions"><button class="add-example-btn" data-id="${w.id}">+ 직접 입력</button><button class="ai-example-btn" data-id="${w.id}">✨ AI 예문</button></div>`}
       <div class="card-meta">
         <span>${formatDate(w.addedAt)}</span>
         ${sourcePart}
@@ -124,6 +127,91 @@ function renderWords(words) {
       e.stopPropagation();
       openCategoryDropdown(btn, Number(btn.dataset.id));
     });
+  });
+  list.querySelectorAll('.example-text[data-id]').forEach(el => {
+    el.addEventListener('click', () => {
+      const word = allWords.find(w => w.id === Number(el.dataset.id));
+      if (word) startExampleEdit(el, word.id, word.example || '');
+    });
+  });
+  list.querySelectorAll('.add-example-btn[data-id]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const wrapper = btn.closest('.example-actions');
+      startExampleEdit(wrapper || btn, Number(btn.dataset.id), '');
+    });
+  });
+  list.querySelectorAll('.ai-example-btn[data-id]').forEach(btn => {
+    btn.addEventListener('click', () => aiGenerateExample(Number(btn.dataset.id)));
+  });
+}
+
+async function aiGenerateExample(wordId) {
+  const { settings = {} } = await chrome.storage.local.get('settings');
+  const apiKey = settings.openaiApiKey;
+  if (!apiKey) {
+    document.getElementById('apiKeyBar').classList.add('show');
+    document.getElementById('apiKeyInput').focus();
+    showToast('먼저 API 키를 설정해주세요');
+    return;
+  }
+  const word = allWords.find(w => w.id === wordId);
+  if (!word) return;
+  const btn = document.querySelector(`.ai-example-btn[data-id="${wordId}"]`);
+  const originalText = btn ? btn.textContent : '';
+  if (btn) { btn.disabled = true; btn.textContent = '⏳'; }
+  try {
+    const res = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` },
+      body: JSON.stringify({
+        model: 'gpt-5.4-nano-2026-03-17',
+        messages: [
+          { role: 'system', content: '영어 단어의 짧고 실용적인 예문을 1개 만들어줘. 형식: "영어 예문 (한국어 해석)". 마크다운 없이.' },
+          { role: 'user', content: `"${word.word}"` },
+        ],
+        max_completion_tokens: 100,
+      }),
+    });
+    if (!res.ok) { const err = await res.json().catch(() => ({})); throw new Error(err.error?.message || `API 오류 ${res.status}`); }
+    const data = await res.json();
+    const example = data.choices?.[0]?.message?.content?.trim();
+    if (example) {
+      await saveWordExample(wordId, example);
+      showToast('예문 생성 완료! ✨');
+    }
+  } catch (err) {
+    showToast(`AI 오류: ${err.message}`);
+    if (btn) { btn.disabled = false; btn.textContent = originalText; }
+  }
+}
+
+async function saveWordExample(wordId, example) {
+  const idx = allWords.findIndex(w => w.id === wordId);
+  if (idx === -1) return;
+  allWords = allWords.map((w, i) => i === idx ? { ...w, example } : w);
+  await chrome.storage.local.set({ words: allWords });
+}
+
+function startExampleEdit(el, wordId, currentExample) {
+  const textarea = document.createElement('textarea');
+  textarea.className = 'edit-input example-edit-input';
+  textarea.value = currentExample;
+  textarea.rows = 2;
+  textarea.placeholder = '예문 입력 (빈칸이면 삭제)';
+  el.replaceWith(textarea);
+  textarea.focus();
+  if (currentExample) textarea.select();
+
+  let saved = false;
+  async function save() {
+    if (saved) return;
+    saved = true;
+    await saveWordExample(wordId, textarea.value.trim());
+  }
+  textarea.addEventListener('blur', save);
+  textarea.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) { e.preventDefault(); textarea.blur(); }
+    if (e.key === 'Escape') { saved = true; applyFilter(); }
   });
 }
 
@@ -382,6 +470,7 @@ async function loadWords() {
 
 function switchView(view) {
   currentView = view;
+  chrome.storage.local.set({ lastView: view });
   document.getElementById('wordbookView').style.display = view === 'wordbook' ? '' : 'none';
   document.getElementById('glossaryView').style.display = view === 'glossary' ? '' : 'none';
   document.getElementById('viewWordbookBtn').classList.toggle('active', view === 'wordbook');
@@ -724,9 +813,37 @@ async function loadGlossary() {
   applyGlossaryFilter();
 }
 
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
   loadWords();
   loadGlossary();
+
+  const { lastView = 'wordbook', settings: initSettings = {} } = await chrome.storage.local.get(['lastView', 'settings']);
+  if (lastView === 'glossary') switchView('glossary');
+
+  const autoFillWordCheck = document.getElementById('autoFillWordCheck');
+  const exampleSentenceCheck = document.getElementById('exampleSentenceCheck');
+
+  autoFillWordCheck.checked = initSettings.autoFillWordbook !== false;
+  exampleSentenceCheck.checked = initSettings.autoExampleSentence !== false;
+  exampleSentenceCheck.disabled = !autoFillWordCheck.checked;
+
+  document.getElementById('autoFillGlossaryCheck').checked = initSettings.autoFillGlossary !== false;
+
+  autoFillWordCheck.addEventListener('change', async (e) => {
+    exampleSentenceCheck.disabled = !e.target.checked;
+    const { settings = {} } = await chrome.storage.local.get('settings');
+    await chrome.storage.local.set({ settings: { ...settings, autoFillWordbook: e.target.checked } });
+  });
+
+  exampleSentenceCheck.addEventListener('change', async (e) => {
+    const { settings = {} } = await chrome.storage.local.get('settings');
+    await chrome.storage.local.set({ settings: { ...settings, autoExampleSentence: e.target.checked } });
+  });
+
+  document.getElementById('autoFillGlossaryCheck').addEventListener('change', async (e) => {
+    const { settings = {} } = await chrome.storage.local.get('settings');
+    await chrome.storage.local.set({ settings: { ...settings, autoFillGlossary: e.target.checked } });
+  });
 
   // View switcher
   document.getElementById('viewWordbookBtn').addEventListener('click', () => switchView('wordbook'));
@@ -818,6 +935,10 @@ document.addEventListener('DOMContentLoaded', () => {
     newTermInput.disabled = false;
     addTermBtn.disabled = false;
     newTermInput.focus();
+    if (document.getElementById('autoFillGlossaryCheck').checked) {
+      const added = allGlossaryTerms[0];
+      if (added) aiAutoFill(added.id);
+    }
   }
 
   addTermBtn.addEventListener('click', submitNewTerm);

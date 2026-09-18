@@ -206,6 +206,14 @@ body {
   align-items: center;
 }
 
+/* ── Auto fill bar ───────────────────── */
+.auto-fill-bar {
+  margin-top: 7px;
+  display: flex;
+  align-items: center;
+  opacity: 0.85;
+}
+
 .cat-toggle-label {
   display: flex;
   align-items: center;
@@ -282,6 +290,80 @@ main {
 .translation-text.error {
   color: #94A3B8;
   font-style: italic;
+}
+
+.example-text {
+  font-size: 12px;
+  color: #64748B;
+  font-style: italic;
+  margin-top: 4px;
+  line-height: 1.5;
+  word-break: break-word;
+  cursor: pointer;
+  border-radius: 4px;
+  padding: 2px 4px;
+  margin-left: -4px;
+  transition: background 0.15s;
+}
+
+.example-text:hover {
+  background: rgba(100, 116, 139, 0.1);
+}
+
+.example-wrapper {
+  display: flex;
+  align-items: flex-start;
+  gap: 4px;
+  margin-top: 4px;
+}
+
+.example-wrapper .example-text {
+  margin-top: 0;
+  flex: 1;
+}
+
+.example-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 4px;
+}
+
+.add-example-btn {
+  font-size: 11px;
+  color: #94A3B8;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  font-style: italic;
+  transition: color 0.15s;
+}
+
+.add-example-btn:hover {
+  color: #64748B;
+}
+
+.ai-example-btn {
+  font-size: 11px;
+  color: #7C3AED;
+  background: none;
+  border: none;
+  padding: 0 2px;
+  cursor: pointer;
+  transition: opacity 0.15s;
+  flex-shrink: 0;
+}
+
+.ai-example-btn:hover { opacity: 0.7; }
+.ai-example-btn:disabled { opacity: 0.4; cursor: default; }
+
+.example-edit-input {
+  margin-top: 4px;
+  width: 100%;
+  font-size: 12px;
+  font-style: italic;
+  resize: vertical;
 }
 
 .card-meta {
